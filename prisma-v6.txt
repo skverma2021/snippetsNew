@@ -1,0 +1,271 @@
+# ✅ Prisma v6 + Next.js (SQLite) — Step-by-Step
+
+> These steps **intentionally avoid Prisma 7** features like `prisma.config.ts`, adapters, or Accelerate.
+
+---
+
+## 0️⃣ Create Fresh Next.js App
+
+```bash
+npx create-next-app@latest my-app --yes
+cd my-app
+npm run dev
+```
+
+Stop the dev server before continuing.
+
+---
+
+## 1️⃣ Install **Prisma v6 (Pinned)**
+
+This is **important** — otherwise npm will install v7.
+
+```bash
+npm install prisma@6 @prisma/client@6 --save-dev
+```
+
+Verify version:
+
+```bash
+npx prisma -v
+```
+
+You should see something like:
+
+```
+prisma 6.x.x
+```
+
+---
+
+## 2️⃣ Initialize Prisma
+
+```bash
+npx prisma init
+```
+
+This creates:
+
+```
+prisma/
+ └── schema.prisma
+.env
+```
+
+---
+
+## 3️⃣ Configure SQLite (Prisma v6 Style)
+
+### `.env`
+
+```env
+DATABASE_URL="file:./dev.db"
+```
+
+---
+
+### `prisma/schema.prisma`
+
+```prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  createdAt DateTime @default(now())
+}
+```
+
+✔️ This `url` field is **valid in Prisma v6**
+
+---
+
+## 4️⃣ Run Migration (This Creates the DB)
+
+```bash
+npx prisma migrate dev --name init
+```
+
+This will:
+
+* Create `prisma/dev.db`
+* Generate migration SQL
+* Generate Prisma Client
+
+📌 If this step succeeds, Prisma is correctly installed.
+
+---
+
+## 5️⃣ Create Prisma Client Singleton (Next.js-Safe)
+
+📁 `src/lib/prisma.ts`
+
+```ts
+import { PrismaClient } from "@prisma/client";
+
+const globalForPrisma = globalThis as unknown as {
+  prisma: PrismaClient | undefined;
+};
+
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: ["query"],
+  });
+
+if (process.env.NODE_ENV !== "production") {
+  globalForPrisma.prisma = prisma;
+}
+```
+
+### Why this matters
+
+* Prevents multiple DB connections during hot reload
+* Recommended by Prisma for Next.js
+
+---
+
+## 6️⃣ Use Prisma in App Router (Server Component)
+
+📁 `src/app/page.tsx`
+
+```ts
+import { prisma } from "@/lib/prisma";
+
+export default async function Home() {
+  const users = await prisma.user.findMany();
+
+  return (
+    <main>
+      <h1>Users</h1>
+      <ul>
+        {users.map((u) => (
+          <li key={u.id}>
+            {u.name} ({u.email})
+          </li>
+        ))}
+      </ul>
+    </main>
+  );
+}
+```
+
+✔️ Works because App Router components are **server components by default**
+
+---
+
+## 7️⃣ Insert Data via API Route (Optional but Recommended)
+
+📁 `src/app/api/users/route.ts`
+
+```ts
+import { prisma } from "@/lib/prisma";
+import { NextResponse } from "next/server";
+
+export async function POST() {
+  const user = await prisma.user.create({
+    data: {
+      name: "Alice",
+      email: "alice@example.com",
+    },
+  });
+
+  return NextResponse.json(user);
+}
+```
+
+Test with:
+
+```bash
+POST http://localhost:3000/api/users
+```
+
+---
+
+## 8️⃣ Prisma Studio (Visual DB Viewer)
+
+```bash
+npx prisma studio
+```
+
+* Open browser UI
+* Inspect `User` table
+* Add / edit records visually
+
+---
+
+## 🔴 Common Prisma v6 Errors & Fixes
+
+### ❌ `@prisma/client did not initialize yet`
+
+**Fix**
+
+```bash
+npx prisma generate
+```
+
+---
+
+### ❌ DB file not created
+
+**Cause:** migration not run
+**Fix**
+
+```bash
+npx prisma migrate dev
+```
+
+---
+
+### ❌ Prisma in client component
+
+**Rule**
+
+* ❌ `use client`
+* ❌ React hooks
+* ✅ Server Components / API routes
+
+---
+
+## 🧠 Prisma v6 Mental Model (Simple & Stable)
+
+```
+schema.prisma
+ ├─ schema
+ ├─ datasource (url)
+ └─ generator
+
+Prisma CLI
+ ├─ migrate
+ ├─ generate
+ └─ studio
+
+Next.js
+ └─ Prisma Client (singleton)
+```
+
+---
+
+## 📌 Final Recommendation
+
+For **learning, tutorials, demos, and teaching**:
+
+* ✅ **Prisma v6 is the right choice**
+* ❌ Avoid Prisma v7 until ecosystem catches up
+
+If you want, next we can:
+
+* Add **relations** (`User` → `Post`)
+* Compare **Prisma v6 vs v7**
+* Show **production deployment workflow**
+* Add **Zod validation + Prisma**
+
+Just tell me what you’d like to do next 👍
