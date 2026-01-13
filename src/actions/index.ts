@@ -1,12 +1,28 @@
 "use server";
 
 import { prisma } from "@/lib/prisma";
+// import { createSnippetSchema } from "@/lib/validations/snippet";
 import {
   createSnippetSchema,
   updateSnippetSchema,
 } from "@/lib/validations/snippet";
-// import type { SnippetActionState } from "./types";
-import type { SnippetActionState } from "./types";
+
+// export type CreateSnippetState = {
+//   errors?: {
+//     title?: string;
+//     code?: string;
+//   };
+//   success?: boolean;
+// };
+export type SnippetActionState = {
+  errors?: {
+    id?: string;
+    title?: string;
+    code?: string;
+  };
+  success?: boolean;
+};
+
 
 export async function createSnippet(
   _prevState: SnippetActionState,
@@ -20,11 +36,16 @@ export async function createSnippet(
   const result = createSnippetSchema.safeParse(rawData);
 
   if (!result.success) {
-    return {
-      errors: Object.fromEntries(
-        result.error.issues.map(i => [i.path[0], i.message])
-      ),
-    };
+    const fieldErrors: SnippetActionState["errors"] = {};
+
+    for (const issue of result.error.issues) {
+      const field = issue.path[0];
+      if (field === "title" || field === "code") {
+        fieldErrors[field] = issue.message;
+      }
+    }
+
+    return { errors: fieldErrors };
   }
 
   await prisma.snippet.create({
@@ -71,11 +92,6 @@ export async function updateSnippet(
   return { success: true };
 }
 
-// "use server";
-
-// import { prisma } from "@/lib/prisma";
-// import type { SnippetActionState } from "./types";
-
 export async function deleteSnippet(
   _prevState: SnippetActionState,
   formData: FormData
@@ -100,5 +116,4 @@ export async function deleteSnippet(
 
   return { success: true };
 }
-
 

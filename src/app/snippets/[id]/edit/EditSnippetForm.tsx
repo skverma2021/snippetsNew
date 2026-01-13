@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
 import { updateSnippet } from "@/actions";
-import type { SnippetActionState } from "@/actions/types";
+import type { SnippetActionState } from "@/actions";
 
 type Props = {
   snippet: {
