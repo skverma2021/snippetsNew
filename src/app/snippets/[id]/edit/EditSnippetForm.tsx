@@ -25,7 +25,8 @@ export default function EditSnippetForm({ snippet }: Props) {
   useEffect(() => {
     if (state.success) {
       toast.success("Snippet updated successfully");
-      router.push(`/snippets/${snippet.id}`);
+      // router.push(`/snippets/${snippet.id}`);
+      router.push(`/`);
     }
   }, [state.success, router, snippet.id]);
 

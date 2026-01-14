@@ -1,19 +1,14 @@
 "use server";
+import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/prisma";
-// import { createSnippetSchema } from "@/lib/validations/snippet";
+
 import {
   createSnippetSchema,
   updateSnippetSchema,
 } from "@/lib/validations/snippet";
+import { redirect } from "next/navigation";
 
-// export type CreateSnippetState = {
-//   errors?: {
-//     title?: string;
-//     code?: string;
-//   };
-//   success?: boolean;
-// };
 export type SnippetActionState = {
   errors?: {
     id?: string;
@@ -22,7 +17,6 @@ export type SnippetActionState = {
   };
   success?: boolean;
 };
-
 
 export async function createSnippet(
   _prevState: SnippetActionState,
@@ -44,14 +38,14 @@ export async function createSnippet(
         fieldErrors[field] = issue.message;
       }
     }
-
     return { errors: fieldErrors };
   }
-
+  
   await prisma.snippet.create({
     data: result.data,
   });
-
+  
+  revalidatePath("/")
   return { success: true };
 }
 
@@ -113,7 +107,8 @@ export async function deleteSnippet(
       errors: { id: "Snippet not found" },
     };
   }
-
-  return { success: true };
+  revalidatePath("/")
+  // return { success: true };
+  redirect("/");
 }
 

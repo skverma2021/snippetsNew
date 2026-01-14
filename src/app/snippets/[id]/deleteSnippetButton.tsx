@@ -14,12 +14,12 @@ export default function DeleteSnippetButton({ id }: { id: number }) {
   const [state, formAction] = useActionState(deleteSnippet, initialState);
   const [isPending] = useTransition();
 
-  useEffect(() => {
-    if (state.success) {
-      toast.success("Snippet deleted");
-      router.push("/");
-    }
-  }, [state.success, router]);
+  // useEffect(() => {
+  //   if (state.success) {
+  //     toast.success("Snippet deleted!");
+  //     router.push("/");
+  //   }
+  // }, [state.success, router]);
 
   return (
     <form
