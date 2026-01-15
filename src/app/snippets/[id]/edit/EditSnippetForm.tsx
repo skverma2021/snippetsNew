@@ -12,12 +12,17 @@ type Props = {
     id: number;
     title: string;
     code: string;
+    snippetTypeId: number | null;
   };
+  snippetTypes: Array<{
+    id: number;
+    description: string;
+  }>;
 };
 
 const initialState: SnippetActionState = {};
 
-export default function EditSnippetForm({ snippet }: Props) {
+export default function EditSnippetForm({ snippet, snippetTypes }: Props) {
   const router = useRouter();
   const [state, formAction] = useActionState(updateSnippet, initialState);
   const [isPending] = useTransition();
@@ -60,6 +65,26 @@ export default function EditSnippetForm({ snippet }: Props) {
         />
         {state.errors?.code && (
           <p className="text-red-600 text-sm">{state.errors.code}</p>
+        )}
+      </div>
+
+      <div>
+        <label className="font-medium">Snippet Type</label>
+        <select
+          name="snippetTypeId"
+          defaultValue={snippet.snippetTypeId ?? ""}
+          disabled={isPending}
+          className="border rounded p-2 w-full"
+        >
+          <option value="">Select a type (optional)</option>
+          {snippetTypes.map((type) => (
+            <option key={type.id} value={type.id}>
+              {type.description}
+            </option>
+          ))}
+        </select>
+        {state.errors?.snippetTypeId && (
+          <p className="text-red-600 text-sm">{state.errors.snippetTypeId}</p>
         )}
       </div>
 

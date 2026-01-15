@@ -17,8 +17,10 @@ export default async function EditSnippetPage({ params }: PageProps) {
     notFound();
   }
 
+  const snippetTypes = await prisma.snippetType.findMany();
+
   return (
-    <EditSnippetForm snippet={snippet} />
+    <EditSnippetForm snippet={snippet} snippetTypes={snippetTypes} />
   );
 }
 

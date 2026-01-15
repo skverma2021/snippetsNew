@@ -14,6 +14,7 @@ export type SnippetActionState = {
     id?: string;
     title?: string;
     code?: string;
+    snippetTypeId?: string;
   };
   success?: boolean;
 };
@@ -25,6 +26,7 @@ export async function createSnippet(
   const rawData = {
     title: formData.get("title"),
     code: formData.get("code"),
+    snippetTypeId: formData.get("snippetTypeId"),
   };
 
   const result = createSnippetSchema.safeParse(rawData);
@@ -34,7 +36,7 @@ export async function createSnippet(
 
     for (const issue of result.error.issues) {
       const field = issue.path[0];
-      if (field === "title" || field === "code") {
+      if (field === "title" || field === "code" || field === "snippetTypeId") {
         fieldErrors[field] = issue.message;
       }
     }
@@ -42,7 +44,11 @@ export async function createSnippet(
   }
   
   await prisma.snippet.create({
-    data: result.data,
+    data: {
+      title: result.data.title,
+      code: result.data.code,
+      snippetTypeId: Number(result.data.snippetTypeId),
+    },
   });
   
   revalidatePath("/")
@@ -57,6 +63,7 @@ export async function updateSnippet(
     id: formData.get("id"),
     title: formData.get("title"),
     code: formData.get("code"),
+    snippetTypeId: formData.get("snippetTypeId"),
   };
 
   const result = updateSnippetSchema.safeParse(rawData);
@@ -69,12 +76,12 @@ export async function updateSnippet(
     };
   }
 
-  const { id, title, code } = result.data;
+  const { id, title, code, snippetTypeId } = result.data;
 
   try {
     await prisma.snippet.update({
       where: { id: Number(id) },
-      data: { title, code },
+      data: { title, code, snippetTypeId: snippetTypeId ? Number(snippetTypeId) : null },
     });
   } catch {
     // record not found
@@ -83,6 +90,7 @@ export async function updateSnippet(
     };
   }
 
+  revalidatePath("/");
   return { success: true };
 }
 

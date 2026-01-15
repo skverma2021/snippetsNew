@@ -3,6 +3,7 @@ import { z } from "zod";
 export const createSnippetSchema = z.object({
   title: z.string().min(3).max(100, "Title must be at most 100 characters"),
   code: z.string().min(5),
+  snippetTypeId: z.string().min(1, "Snippet type is required"),
 });
 
 export const updateSnippetSchema = createSnippetSchema.extend({
